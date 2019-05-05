@@ -31,5 +31,16 @@ namespace TelegramBot
             }
             return true;
         }
+
+        public static IEnumerable<string> GetAllContainingKeysIn(this string source, List<string> values)
+        {
+            foreach(var value in values)
+            {
+                if (source.Contains(value))
+                {
+                    yield return value;
+                }
+            }
+        }
     }
 }
