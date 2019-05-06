@@ -52,13 +52,6 @@ namespace TelegramBot
                         await Bot.SendTextMessageAsync(chatId, "No he encontrado esa frase para borrar");
                     }
                 }
-                else if (messageText.ContainsAny(LearnedPhrases.Keys))
-                {
-                    foreach (var key in messageText.GetAllContainingKeysIn(LearnedPhrases.Keys.ToList()))
-                    {
-                        await Bot.SendTextMessageAsync(chatId, LearnedPhrases[key]);
-                    }
-                }
                 else if (messageText.ContainsAll(new List<string>() { "amigo", "aprende a contestar" }))
                 {
                     int position = e.Message.Text.IndexOf("aprende a contestar") + 20;
@@ -101,6 +94,13 @@ namespace TelegramBot
                 {
                     int position = e.Message.Text.IndexOf("di") + 2;
                     await Bot.SendTextMessageAsync(chatId, e.Message.Text.Substring(position));
+                }
+                else if (messageText.ContainsAny(LearnedPhrases.Keys))
+                {
+                    foreach (var key in messageText.GetAllContainingKeysIn(LearnedPhrases.Keys.ToList()))
+                    {
+                        await Bot.SendTextMessageAsync(chatId, LearnedPhrases[key]);
+                    }
                 }
 
                 // SPAM
