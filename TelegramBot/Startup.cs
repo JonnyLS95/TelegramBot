@@ -34,14 +34,15 @@ namespace TelegramBot
         {
             if(e.Message.Type == Telegram.Bot.Types.Enums.MessageType.Text && e.Message.Date.AddMinutes(1) > DateTime.UtcNow)
             {
-                string messageText = e.Message.Text.ToLower();
+                string messageText = e.Message.Text;
+                string lowerMessageText = messageText.ToLower();
                 long chatId = e.Message.Chat.Id;
 
                 // LearnedPhrases
-                if (messageText.Contains("/remove"))
+                if (lowerMessageText.Contains("/remove"))
                 {
                     int position = e.Message.Text.IndexOf("/remove") + 8;
-                    string keyToRemove = messageText.Substring(position);
+                    string keyToRemove = lowerMessageText.Substring(position);
                     if (LearnedPhrases.ContainsKey(keyToRemove))
                     {
                         LearnedPhrases.Remove(keyToRemove);
@@ -52,7 +53,7 @@ namespace TelegramBot
                         await Bot.SendTextMessageAsync(chatId, "No he encontrado esa frase para borrar");
                     }
                 }
-                else if (messageText.ContainsAll(new List<string>() { "amigo", "aprende a contestar" }))
+                else if (lowerMessageText.ContainsAll(new List<string>() { "amigo", "aprende a contestar" }))
                 {
                     int position = e.Message.Text.IndexOf("aprende a contestar") + 20;
                     List<string> nuevaFrase = new List<string>();
@@ -63,8 +64,8 @@ namespace TelegramBot
 
                     if (nuevaFrase.Count == 2)
                     {
-                        string key = nuevaFrase.Last().ToLower().Replace("\"", string.Empty);
-                        string value = nuevaFrase.First().Replace("\"", string.Empty);
+                        string key = nuevaFrase.Last().ToLower().Replace("\"", string.Empty).Trim();
+                        string value = nuevaFrase.First().Replace("\"", string.Empty).Trim();
 
                         if (!string.IsNullOrEmpty(key) && 
                             !string.IsNullOrEmpty(value) && 
@@ -90,27 +91,27 @@ namespace TelegramBot
                         await Bot.SendTextMessageAsync(chatId, "Eso no lo he podido aprender...");
                     }
                 }
-                else if (messageText.ContainsAll(new List<string>() { "amigo", "di" }))
+                else if (lowerMessageText.ContainsAll(new List<string>() { "amigo", "di" }))
                 {
-                    int position = e.Message.Text.IndexOf("di") + 2;
+                    int position = e.Message.Text.IndexOf("di") + 3;
                     await Bot.SendTextMessageAsync(chatId, e.Message.Text.Substring(position));
                 }
-                else if (messageText.ContainsAny(LearnedPhrases.Keys))
+                else if (lowerMessageText.ContainsAny(LearnedPhrases.Keys))
                 {
-                    foreach (var key in messageText.GetAllContainingKeysIn(LearnedPhrases.Keys.ToList()))
+                    foreach (var key in lowerMessageText.GetAllContainingKeysIn(LearnedPhrases.Keys.ToList()))
                     {
                         await Bot.SendTextMessageAsync(chatId, LearnedPhrases[key]);
                     }
                 }
 
                 // SPAM
-                if (messageText.Contains("/start") &&
+                if (lowerMessageText.Contains("/start") &&
                     e.Message.Chat.Type == Telegram.Bot.Types.Enums.ChatType.Group)
                 {
                     await Bot.SendTextMessageAsync(chatId, "Quereis empezar una partida? Eso merece un buen patataspam!!");
                     await SpamAdmins(chatId);
                 }
-                else if (messageText.Contains("patataspa") &&
+                else if (lowerMessageText.Contains("patataspa") &&
                     e.Message.Chat.Type == Telegram.Bot.Types.Enums.ChatType.Group)
                 {
                     await SpamAdmins(chatId);
