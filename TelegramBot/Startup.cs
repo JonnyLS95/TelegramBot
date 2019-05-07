@@ -178,6 +178,8 @@ namespace TelegramBot
             {
                 await Bot.SendTextMessageAsync(chatId, "No he podido eliminar esta opción, tal vez ya la haya eliminado otro!");
             }
+
+            await Bot.DeleteMessageAsync(chatId, e.CallbackQuery.Message.MessageId);
         }
 
         private static async System.Threading.Tasks.Task SpamAdmins(long chatId)
