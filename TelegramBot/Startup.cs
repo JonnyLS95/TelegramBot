@@ -1,29 +1,35 @@
-﻿using System;
+﻿using Newtonsoft.Json;
+using System;
 using System.Collections.Generic;
+using System.Configuration;
+using System.Linq;
+using System.Text.RegularExpressions;
 using Telegram.Bot;
 using Telegram.Bot.Args;
 using Telegram.Bot.Types;
-using System.Configuration;
-using System.Text.RegularExpressions;
-using System.Linq;
-using Newtonsoft.Json;
+using Telegram.Bot.Types.ReplyMarkups;
 
 namespace TelegramBot
 {
     public class Startup
     {
         public static readonly TelegramBotClient Bot = new TelegramBotClient(ConfigurationManager.AppSettings["TelegramBotKey"]);
-        public static Dictionary<string, string> LearnedPhrases = new Dictionary<string, string>();
+        public static Dictionary<string, List<string>> LearnedPhrases = new Dictionary<string, List<string>>();
         public static string LearnedPhrasesPath;
+        private static Random random;
+
 
         static void Main(string[] args)
         {
             LearnedPhrasesPath = System.IO.Directory.GetCurrentDirectory() + "\\LearnedPhrases.json";
+            random = new Random(DateTime.Now.Millisecond);
 
             Bot.OnMessage += OnMessage;
+            Bot.OnCallbackQuery += OnCallbackQueryReceived;
+
 
             if (System.IO.File.Exists(LearnedPhrasesPath))
-            LearnedPhrases = JsonConvert.DeserializeObject<Dictionary<string, string>>(System.IO.File.ReadAllText(LearnedPhrasesPath));
+                LearnedPhrases = JsonConvert.DeserializeObject<Dictionary<string, List<string>>>(System.IO.File.ReadAllText(LearnedPhrasesPath));
 
             Bot.StartReceiving();
             Console.ReadLine();
@@ -45,8 +51,28 @@ namespace TelegramBot
                     string keyToRemove = lowerMessageText.Substring(position);
                     if (LearnedPhrases.ContainsKey(keyToRemove))
                     {
-                        LearnedPhrases.Remove(keyToRemove);
-                        await Bot.SendTextMessageAsync(chatId, "Borrado!");
+                        var valuesList = LearnedPhrases[keyToRemove];
+                        if (valuesList.Count == 1)
+                        {
+                            LearnedPhrases.Remove(keyToRemove);
+                            await Bot.SendTextMessageAsync(chatId, "Borrado!");
+                        }
+                        else
+                        {
+                            InlineKeyboardButton[][] buttons = new InlineKeyboardButton[valuesList.Count][];
+                            for (int i = 0; i < valuesList.Count; i++)
+                            {
+                                buttons[i] = new InlineKeyboardButton[] {
+                                    InlineKeyboardButton.WithCallbackData(
+                                        valuesList[i], 
+                                        string.Format("{0};#!{1}", keyToRemove, valuesList[i])
+                                    )
+                                };
+                            }
+                            var keyboardMarkup = new InlineKeyboardMarkup(buttons);
+
+                            await Bot.SendTextMessageAsync(chatId, "Cual quieres eliminar?", replyMarkup: keyboardMarkup);
+                        }
                     }
                     else
                     {
@@ -73,11 +99,18 @@ namespace TelegramBot
                         {
                             if (LearnedPhrases.ContainsKey(key))
                             {
-                                LearnedPhrases[key] = value;
+                                if(LearnedPhrases[key].Contains(value))
+                                {
+                                    await Bot.SendTextMessageAsync(chatId, "Esta ya me la sabía!");
+                                }
+                                else
+                                {
+                                    LearnedPhrases[key].Add(value);
+                                }
                             }
                             else
                             {
-                                LearnedPhrases.Add(key, value);
+                                LearnedPhrases.Add(key, new List<string>() { value });
                             }
                             await Bot.SendTextMessageAsync(chatId, "Aprendido!");
                             System.IO.File.WriteAllText(LearnedPhrasesPath, JsonConvert.SerializeObject(LearnedPhrases));
@@ -100,7 +133,10 @@ namespace TelegramBot
                 {
                     foreach (var key in lowerMessageText.GetAllContainingKeysIn(LearnedPhrases.Keys.ToList()))
                     {
-                        await Bot.SendTextMessageAsync(chatId, LearnedPhrases[key]);
+                        var valuesList = LearnedPhrases[key];
+                        int randomPosition = random.Next(valuesList.Count);
+
+                        await Bot.SendTextMessageAsync(chatId, valuesList[randomPosition]);
                     }
                 }
 
@@ -118,6 +154,29 @@ namespace TelegramBot
                 {
                     await SpamAdmins(chatId);
                 }
+            }
+        }
+
+        private static async void OnCallbackQueryReceived(object sender, CallbackQueryEventArgs e)
+        {
+            long chatId = e.CallbackQuery.Message.Chat.Id;
+            int separatorPosition = e.CallbackQuery.Data.IndexOf(";#!");
+
+            string keyToRemove = e.CallbackQuery.Data.Substring(0, separatorPosition);
+            string valueToRemove = e.CallbackQuery.Data.Substring(separatorPosition + 3);
+
+            var valuesList = LearnedPhrases[keyToRemove];
+
+            if (valuesList.Contains(valueToRemove))
+            {
+                valuesList.Remove(valueToRemove);
+                await Bot.SendTextMessageAsync(chatId, string.Format("Eliminada la opción {0} - {1}", keyToRemove, valueToRemove));
+
+                System.IO.File.WriteAllText(LearnedPhrasesPath, JsonConvert.SerializeObject(LearnedPhrases));
+            }
+            else
+            {
+                await Bot.SendTextMessageAsync(chatId, "No he podido eliminar esta opción, tal vez ya la haya eliminado otro!");
             }
         }
 
