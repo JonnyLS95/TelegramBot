@@ -106,13 +106,15 @@ namespace TelegramBot
 
                 // SPAM
                 if (lowerMessageText.Contains("/start") &&
-                    e.Message.Chat.Type == Telegram.Bot.Types.Enums.ChatType.Group)
+                    (e.Message.Chat.Type == Telegram.Bot.Types.Enums.ChatType.Group ||
+                    e.Message.Chat.Type == Telegram.Bot.Types.Enums.ChatType.Supergroup))
                 {
                     await Bot.SendTextMessageAsync(chatId, "Quereis empezar una partida? Eso merece un buen patataspam!!");
                     await SpamAdmins(chatId);
                 }
                 else if (lowerMessageText.Contains("patataspa") &&
-                    e.Message.Chat.Type == Telegram.Bot.Types.Enums.ChatType.Group)
+                    (e.Message.Chat.Type == Telegram.Bot.Types.Enums.ChatType.Group ||
+                    e.Message.Chat.Type == Telegram.Bot.Types.Enums.ChatType.Supergroup))
                 {
                     await SpamAdmins(chatId);
                 }
