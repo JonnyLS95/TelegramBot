@@ -62,10 +62,11 @@ namespace TelegramBot
                             InlineKeyboardButton[][] buttons = new InlineKeyboardButton[valuesList.Count][];
                             for (int i = 0; i < valuesList.Count; i++)
                             {
+                                var value = valuesList[i];
                                 buttons[i] = new InlineKeyboardButton[] {
                                     InlineKeyboardButton.WithCallbackData(
-                                        valuesList[i], 
-                                        string.Format("{0};#!{1}", keyToRemove, valuesList[i])
+                                        value, 
+                                        string.Format("{0};#!{1}", keyToRemove, value.Substring(0, value.Length < 20 ? value.Length : 20))
                                     )
                                 };
                             }
