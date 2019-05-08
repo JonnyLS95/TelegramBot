@@ -45,7 +45,7 @@ namespace TelegramBot
                 long chatId = e.Message.Chat.Id;
 
                 // LearnedPhrases
-                if (lowerMessageText.Contains("/remove"))
+                if (lowerMessageText.Contains("/remove") && lowerMessageText.Length > 8)
                 {
                     int position = e.Message.Text.IndexOf("/remove") + 8;
                     string keyToRemove = lowerMessageText.Substring(position);
@@ -125,9 +125,9 @@ namespace TelegramBot
                         await Bot.SendTextMessageAsync(chatId, "Eso no lo he podido aprender...");
                     }
                 }
-                else if (lowerMessageText.ContainsAll(new List<string>() { "amigo", "di" }))
+                else if (lowerMessageText.ContainsAll(new List<string>() { "amigo", "di:" }))
                 {
-                    int position = e.Message.Text.IndexOf("di") + 3;
+                    int position = e.Message.Text.IndexOf("di:") + 3;
                     await Bot.SendTextMessageAsync(chatId, e.Message.Text.Substring(position));
                 }
                 else if (lowerMessageText.ContainsAny(LearnedPhrases.Keys))
